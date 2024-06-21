@@ -6,7 +6,7 @@ import { fileURLToPath } from 'url';
 import videoRoutes from './routes/videos.js';
 import dotenv from 'dotenv';
 
-dotenv.config();  
+dotenv.config();
 
 const app = express();
 

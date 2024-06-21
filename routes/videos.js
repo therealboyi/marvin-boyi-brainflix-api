@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url';
 import { v4 as uuidv4 } from 'uuid';
 import dotenv from 'dotenv';
 
-dotenv.config();  
+dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -58,7 +58,7 @@ router.post('/', async (req, res) => {
       id: uuidv4(), // Generates a new UUID
       title: req.body.title,
       description: req.body.description,
-      image: req.body.image || '/public/images/image4.jpg',
+      image: req.body.image || `${process.env.API_URL}/images/image4.jpg`, 
       channel: req.body.channel || "Unknown Channel",
       views: "0",
       likes: "0",
@@ -73,6 +73,55 @@ router.post('/', async (req, res) => {
     res.status(201).json(newVideo);
   } catch (error) {
     console.error('Error saving video:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+router.post('/:videoId/comments', async (req, res) => {
+  try {
+    const videos = await getVideos();
+    const video = videos.find(v => v.id === req.params.videoId);
+    if (!video) {
+      return res.status(404).send('Video not found');
+    }
+
+    const newComment = {
+      id: uuidv4(),
+      name: req.body.name || 'Anonymous',
+      comment: req.body.comment,
+      likes: 0,
+      timestamp: Date.now()
+    };
+
+    video.comments.push(newComment);
+    await saveVideos(videos);
+
+    res.status(201).json(newComment);
+  } catch (error) {
+    console.error('Error saving comment:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+router.delete('/:videoId/comments/:commentId', async (req, res) => {
+  try {
+    const videos = await getVideos();
+    const video = videos.find(v => v.id === req.params.videoId);
+    if (!video) {
+      return res.status(404).send('Video not found');
+    }
+
+    const commentIndex = video.comments.findIndex(c => c.id === req.params.commentId);
+    if (commentIndex === -1) {
+      return res.status(404).send('Comment not found');
+    }
+
+    const deletedComment = video.comments.splice(commentIndex, 1);
+    await saveVideos(videos);
+
+    res.status(200).json(deletedComment[0]);
+  } catch (error) {
+    console.error('Error deleting comment:', error);
     res.status(500).send('Internal Server Error');
   }
 });
