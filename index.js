@@ -4,6 +4,9 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import videoRoutes from './routes/videos.js';
+import dotenv from 'dotenv';
+
+dotenv.config();  
 
 const app = express();
 

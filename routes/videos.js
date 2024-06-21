@@ -3,12 +3,15 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { v4 as uuidv4 } from 'uuid';
+import dotenv from 'dotenv';
+
+dotenv.config();  
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const router = express.Router();
-const videosFilePath = path.join(__dirname, '../data/videos.json');
+const videosFilePath = path.resolve(__dirname, '..', process.env.VIDEOS_FILE_PATH);
 
 const getVideos = async () => {
   const data = await fs.readFile(videosFilePath, 'utf-8');
@@ -27,6 +30,7 @@ router.get('/', async (req, res) => {
     }));
     res.json(videoSummaries);
   } catch (error) {
+    console.error('Error fetching videos:', error);
     res.status(500).send('Internal Server Error');
   }
 });
@@ -41,6 +45,7 @@ router.get('/:id', async (req, res) => {
       res.status(404).send('Video not found');
     }
   } catch (error) {
+    console.error('Error fetching video by ID:', error);
     res.status(500).send('Internal Server Error');
   }
 });
