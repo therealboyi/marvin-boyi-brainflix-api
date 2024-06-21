@@ -1,7 +1,12 @@
-const express = require('express');
-const fs = require('fs');
-const path = require('path');
+import express from 'express';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
 const router = express.Router();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const videosFilePath = path.join(__dirname, '../data/videos.json');
 
 const getVideos = () => {
@@ -34,7 +39,7 @@ router.post('/', (req, res) => {
     id: `v${Date.now()}`,
     title: req.body.title,
     description: req.body.description,
-    image: '/public/images/Upload-video-preview.jpg', 
+    image: '/public/images/image0.jpg',
     ...req.body,
   };
   videos.push(newVideo);
@@ -42,4 +47,4 @@ router.post('/', (req, res) => {
   res.status(201).json(newVideo);
 });
 
-module.exports = router;
+export default router;

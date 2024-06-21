@@ -1,7 +1,7 @@
-const express = require('express');
-const bodyParser = require('body-parser');
-const cors = require('cors');
-const videoRoutes = require('./routes/videos');
+import express from 'express';
+import bodyParser from 'body-parser';
+import cors from 'cors';
+import videoRoutes from './routes/videos.js';
 
 const app = express();
 
@@ -11,7 +11,7 @@ app.use(express.static('public'));
 
 app.use('/videos', videoRoutes);
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+    console.log(`🚀 Server is running 💯 on port ${PORT}`);
 });
