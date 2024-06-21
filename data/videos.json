@@ -310,6 +310,35 @@
     "duration": "0:00",
     "video": "https://unit-3-project-api-0a5620414506.herokuapp.com/stream",
     "timestamp": 1719007116416,
-    "comments": []
+    "comments": [
+      {
+        "id": "bb49271d-e769-4266-bfbb-def216d6c7e6",
+        "name": "Anonymous",
+        "comment": "This is my first comment!!!🫶🏻",
+        "likes": 0,
+        "timestamp": 1719009620629
+      }
+    ]
+  },
+  {
+    "id": "699ae3bd-d0aa-42eb-9215-1aa646eec741",
+    "title": "Test With Thumbnail upload",
+    "description": "Test",
+    "image": "http://localhost:8080/images/c00a3a72-ad79-40fe-8843-d54e1f7ab24e-markus-spiske-AaEQmoufHLk-unsplash.jpg",
+    "channel": "My Channel",
+    "views": "0",
+    "likes": "0",
+    "duration": "0:00",
+    "video": "https://unit-3-project-api-0a5620414506.herokuapp.com/stream",
+    "timestamp": 1719011620570,
+    "comments": [
+      {
+        "id": "97fa87bc-bb91-49e4-9742-4494cd35935e",
+        "name": "Anonymous",
+        "comment": "Working!!!",
+        "likes": 0,
+        "timestamp": 1719011949158
+      }
+    ]
   }
 ]

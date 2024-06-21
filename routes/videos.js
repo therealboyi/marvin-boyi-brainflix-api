@@ -4,6 +4,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { v4 as uuidv4 } from 'uuid';
 import dotenv from 'dotenv';
+import multer from 'multer';
 
 dotenv.config();
 
@@ -12,6 +13,17 @@ const __dirname = path.dirname(__filename);
 
 const router = express.Router();
 const videosFilePath = path.resolve(__dirname, '..', process.env.VIDEOS_FILE_PATH);
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '..', 'public', 'images'));
+  },
+  filename: (req, file, cb) => {
+    cb(null, `${uuidv4()}-${file.originalname}`);
+  },
+});
+
+const upload = multer({ storage });
 
 const getVideos = async () => {
   const data = await fs.readFile(videosFilePath, 'utf-8');
@@ -50,47 +62,21 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-router.post('/', async (req, res) => {
+router.post('/:id/comments', async (req, res) => {
   try {
-    console.log("POST /videos request received");
     const videos = await getVideos();
-    const newVideo = {
-      id: uuidv4(), // Generates a new UUID
-      title: req.body.title,
-      description: req.body.description,
-      image: req.body.image || `${process.env.API_URL}/images/image4.jpg`, 
-      channel: req.body.channel || "Unknown Channel",
-      views: "0",
-      likes: "0",
-      duration: req.body.duration || "0:00",
-      video: req.body.video || "https://unit-3-project-api-0a5620414506.herokuapp.com/stream",
-      timestamp: Date.now(),
-      comments: []
-    };
-    videos.push(newVideo);
-    await saveVideos(videos);
-    console.log("New video saved:", newVideo);
-    res.status(201).json(newVideo);
-  } catch (error) {
-    console.error('Error saving video:', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
+    const video = videos.find(v => v.id === req.params.id);
 
-router.post('/:videoId/comments', async (req, res) => {
-  try {
-    const videos = await getVideos();
-    const video = videos.find(v => v.id === req.params.videoId);
     if (!video) {
       return res.status(404).send('Video not found');
     }
 
     const newComment = {
       id: uuidv4(),
-      name: req.body.name || 'Anonymous',
+      name: req.body.name,
       comment: req.body.comment,
       likes: 0,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
 
     video.comments.push(newComment);
@@ -98,7 +84,7 @@ router.post('/:videoId/comments', async (req, res) => {
 
     res.status(201).json(newComment);
   } catch (error) {
-    console.error('Error saving comment:', error);
+    console.error('Error adding comment:', error);
     res.status(500).send('Internal Server Error');
   }
 });
@@ -107,11 +93,13 @@ router.delete('/:videoId/comments/:commentId', async (req, res) => {
   try {
     const videos = await getVideos();
     const video = videos.find(v => v.id === req.params.videoId);
+
     if (!video) {
       return res.status(404).send('Video not found');
     }
 
     const commentIndex = video.comments.findIndex(c => c.id === req.params.commentId);
+
     if (commentIndex === -1) {
       return res.status(404).send('Comment not found');
     }
