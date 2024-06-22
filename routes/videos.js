@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 import { v4 as uuidv4 } from 'uuid';
 import dotenv from 'dotenv';
 import multer from 'multer';
+import crypto from 'crypto';
 
 dotenv.config();
 
@@ -13,10 +14,11 @@ const __dirname = path.dirname(__filename);
 
 const router = express.Router();
 const videosFilePath = path.resolve(__dirname, '..', process.env.VIDEOS_FILE_PATH);
+const imagesDir = path.join(__dirname, '..', 'public', 'images');
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, '..', 'public', 'images'));
+    cb(null, imagesDir);
   },
   filename: (req, file, cb) => {
     cb(null, `${uuidv4()}-${file.originalname}`);
@@ -32,6 +34,28 @@ const getVideos = async () => {
 
 const saveVideos = async (videos) => {
   await fs.writeFile(videosFilePath, JSON.stringify(videos, null, 2), 'utf-8');
+};
+
+const computeFileHash = async (filePath) => {
+  try {
+    const fileBuffer = await fs.readFile(filePath);
+    const hashSum = crypto.createHash('sha256');
+    hashSum.update(fileBuffer);
+    return hashSum.digest('hex');
+  } catch (error) {
+    console.error('Error computing file hash:', error);
+    throw error;
+  }
+};
+
+const getNextUntitledVideoName = (videos) => {
+  const untitledVideos = videos
+    .map(video => video.title)
+    .filter(title => title.startsWith('Untitled_Video'))
+    .map(title => parseInt(title.split('_').pop(), 10))
+    .filter(number => !isNaN(number));
+  const nextNumber = untitledVideos.length > 0 ? Math.max(...untitledVideos) + 1 : 1;
+  return `Untitled_Video_${String(nextNumber).padStart(2, '0')}`;
 };
 
 router.get('/', async (req, res) => {
@@ -65,11 +89,35 @@ router.get('/:id', async (req, res) => {
 router.post('/', upload.single('image'), async (req, res) => {
   try {
     const videos = await getVideos();
+    let imagePath = null;
+    let imageHash = null;
+
+    if (req.file) {
+      imageHash = await computeFileHash(req.file.path);
+      console.log('Computed image hash:', imageHash);
+
+      // Check if the hash already exists
+      const existingImage = videos.find(video => video.imageHash === imageHash);
+      if (existingImage) {
+        // Remove the newly uploaded file since it's a duplicate
+        await fs.unlink(req.file.path);
+        imagePath = existingImage.image;
+      } else {
+        // Use the new image and store its hash
+        imagePath = `${process.env.API_URL}/images/${req.file.filename}`;
+      }
+    } else {
+      imagePath = `${process.env.API_URL}/images/Upload-video-preview.jpg`;
+    }
+
+    const newTitle = req.body.title || getNextUntitledVideoName(videos);
+
     const newVideo = {
       id: uuidv4(),
-      title: req.body.title,
+      title: newTitle,
       description: req.body.description,
-      image: req.file ? `${process.env.API_URL}/images/${req.file.filename}` : `${process.env.API_URL}/images/image4.jpg`,
+      image: imagePath,
+      imageHash: imageHash, // Store the hash for duplicate detection
       channel: req.body.channel,
       views: req.body.views,
       likes: req.body.likes,
