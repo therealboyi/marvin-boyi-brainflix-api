@@ -62,6 +62,31 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+router.post('/', upload.single('image'), async (req, res) => {
+  try {
+    const videos = await getVideos();
+    const newVideo = {
+      id: uuidv4(),
+      title: req.body.title,
+      description: req.body.description,
+      image: req.file ? `${process.env.API_URL}/images/${req.file.filename}` : `${process.env.API_URL}/images/image4.jpg`,
+      channel: req.body.channel,
+      views: req.body.views,
+      likes: req.body.likes,
+      duration: req.body.duration,
+      video: req.body.video,
+      timestamp: req.body.timestamp,
+      comments: JSON.parse(req.body.comments)
+    };
+    videos.push(newVideo);
+    await saveVideos(videos);
+    res.status(201).json(newVideo);
+  } catch (error) {
+    console.error('Error uploading video:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
 router.post('/:id/comments', async (req, res) => {
   try {
     const videos = await getVideos();
@@ -110,6 +135,25 @@ router.delete('/:videoId/comments/:commentId', async (req, res) => {
     res.status(200).json(deletedComment[0]);
   } catch (error) {
     console.error('Error deleting comment:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+router.put('/:videoId/likes', async (req, res) => {
+  try {
+    const videos = await getVideos();
+    const video = videos.find(v => v.id === req.params.videoId);
+
+    if (!video) {
+      return res.status(404).send('Video not found');
+    }
+
+    video.likes = (parseInt(video.likes, 10) || 0) + 1;
+    await saveVideos(videos);
+
+    res.status(200).json(video);
+  } catch (error) {
+    console.error('Error incrementing likes:', error);
     res.status(500).send('Internal Server Error');
   }
 });
