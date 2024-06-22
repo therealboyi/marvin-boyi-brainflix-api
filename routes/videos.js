@@ -75,7 +75,7 @@ router.post('/', upload.single('image'), async (req, res) => {
       likes: req.body.likes,
       duration: req.body.duration,
       video: req.body.video,
-      timestamp: req.body.timestamp,
+      timestamp: Number(req.body.timestamp), 
       comments: JSON.parse(req.body.comments)
     };
     videos.push(newVideo);
@@ -148,10 +148,12 @@ router.put('/:videoId/likes', async (req, res) => {
       return res.status(404).send('Video not found');
     }
 
-    video.likes = (parseInt(video.likes, 10) || 0) + 1;
+    const currentLikes = parseInt(video.likes.replace(/,/g, ''), 10) || 0; 
+    video.likes = (currentLikes + 1).toLocaleString(); 
+
     await saveVideos(videos);
 
-    res.status(200).json(video);
+    res.status(200).json({ likes: video.likes }); 
   } catch (error) {
     console.error('Error incrementing likes:', error);
     res.status(500).send('Internal Server Error');
